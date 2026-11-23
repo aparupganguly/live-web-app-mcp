@@ -19,6 +19,12 @@ Open [http://localhost:3000/mcp](http://localhost:3000/mcp) in a browser to see 
 
 Run `npm run typecheck` to refresh MCP view types and check the project with its local TypeScript compiler. Statically declared tools used by views must be assigned to exported constants.
 
+## inspect-url
+
+`inspect-url` fetches a web page on the server and shows a link preview card: image (`og:image`, falling back to `twitter:image`), title, description and domain. The model gets a short text summary; the card reads the same fields from `structuredContent`. Invalid URLs, non-2xx responses, non-HTML pages and slow sites (8s timeout) come back as a clear error instead of a crash.
+
+To try it, run `npm run dev`, open the Inspector, pick the `inspect-url` tool, enter a URL such as `https://github.com` and run it. Try `https://httpbin.org/json` to see the error state.
+
 ## Learn More
 
 To learn more about mcp-use and MCP:

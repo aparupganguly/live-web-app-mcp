@@ -1,0 +1,5 @@
+/* Standard og:image ratio (1200x630) so cards keep a stable height. */
+.preview-image {
+  aspect-ratio: 1.91 / 1;
+  object-fit: cover;
+}

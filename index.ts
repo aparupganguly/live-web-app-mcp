@@ -1,6 +1,8 @@
 import { MCPServer } from "mcp-use";
 import { z } from "zod";
 
+import { fetchPageMeta } from "./src/page-meta.js";
+
 const server = new MCPServer({
   name: "live-web-app",
   title: "live-web-app", // Human readable name of the server
@@ -109,6 +111,73 @@ export const sayHello = server.tool(
     const data = { greeting: `Hello, ${name}! it's Aparup 👋 this came from my MCP server` };
     return {
       content: [{ type: "text", text: data.greeting }],
+      structuredContent: data,
+    };
+  }
+);
+
+// inspect-url — fetches a page and renders a link preview card in the inspect-url view
+const inspectUrlInputSchema = z.object({
+  url: z
+    .url({
+      protocol: /^https?$/,
+      error: "Enter a valid http(s) URL, e.g. https://example.com",
+    })
+    .describe("Absolute http(s) URL of the page to inspect"),
+});
+
+const inspectUrlOutputSchema = z.object({
+  url: z.string().describe("Final URL after redirects"),
+  title: z.string().optional().describe("Page title"),
+  description: z.string().optional().describe("Meta description"),
+  image: z
+    .string()
+    .optional()
+    .describe("Absolute og:image (or twitter:image) URL"),
+});
+
+export const inspectUrl = server.tool(
+  {
+    name: "inspect-url",
+    title: "Inspect URL",
+    description:
+      "Fetch a web page and show its title, description and preview image",
+    inputSchema: inspectUrlInputSchema,
+    outputSchema: inspectUrlOutputSchema,
+    view: {
+      name: "inspect-url", // directory under views/
+      description: "Link preview card for a fetched web page",
+      prefersBorder: false,
+      csp: {
+        // og:image can live on any host, so allow https images from anywhere.
+        resourceDomains: ["https:"],
+      },
+    },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: true, // reaches arbitrary external sites
+    },
+  },
+  async ({ url }) => {
+    const result = await fetchPageMeta(url);
+    if (!result.ok) {
+      return {
+        isError: true,
+        content: [{ type: "text", text: result.error }],
+      };
+    }
+
+    const data = result.meta;
+    const summary = [
+      `Title: ${data.title ?? "(none)"}`,
+      `Description: ${data.description ?? "(none)"}`,
+      `Image: ${data.image ?? "(none)"}`,
+      `Final URL: ${data.url}`,
+    ].join("\n");
+
+    return {
+      content: [{ type: "text", text: summary }],
       structuredContent: data,
     };
   }
